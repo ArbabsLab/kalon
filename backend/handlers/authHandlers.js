@@ -32,6 +32,34 @@ const setCookies = (res, accessToken, refreshToken) => {
     })
 }
 
+export const refreshToken = async (req, res) => {
+    try {
+        const refresh_token = req.cookies.refreshToken;
+        if (!refresh_token){
+            return res.status(400).json({message: "Refresh token not found"});
+        }
+
+        const decoded = jwt.verify(refresh_token, process.env.REFRESH_TOKEN_SECRET);
+        const cached_token = await redis.get(`${decoded.userId}`);
+        if (cached_token !== refresh_token){
+            res.status(400).json({message: "Refresh token invalid"});
+        }
+
+        const access_token = jwt.sign({userId: decoded.userId}, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "15m",
+        })
+
+        res.cookie("accessToken", access_token, {
+        httpOnly: true,
+        sameSite: "strict",
+        maxAge: 15*60*1000,
+        })
+
+        res.json({ message: "Access token refreshed"})
+    } catch (e){
+        res.status(500).json({message: e.message});
+    }
+}
 
 export const signup = async (req, res) => {
     const {email, password, name} = req.body;
@@ -50,7 +78,7 @@ export const signup = async (req, res) => {
     res.status(201).json({user: {
         _id: user._id,
         name: user.name,
-    }, message: "User created"});
+    }, message: "User signed up"});
 
     } catch (e){
         res.status(500).json({message: e.message})
@@ -59,7 +87,22 @@ export const signup = async (req, res) => {
 }
 
 export const signin = async (req, res) => {
-    res.send("hi")
+    try {const {email, password} = req.body;
+    const user = await User.findOne({email})
+    if (user && (await user.validatePassword(password))){
+        const {access_token, refresh_token} = generateToken(user._id);
+        await storeRefreshToken(user._id, refresh_token);
+        setCookies(res, access_token, refresh_token);
+
+        res.status(201).json({user: {
+        _id: user._id,
+        name: user.name,
+        }, message: "User signed in"});
+    } else{
+        res.status(401).json({message: "Email or password invalid"})
+    }} catch (e){
+        res.status(500).json({message: e.message});
+    }
 }
 
 export const signout = async (req, res) => {
