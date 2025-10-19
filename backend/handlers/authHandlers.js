@@ -63,6 +63,18 @@ export const signin = async (req, res) => {
 }
 
 export const signout = async (req, res) => {
-    res.send("hi")
+    try{
+        const refresh_token = req.cookies.refreshToken;
+        if (refresh_token) {
+            const decoded = jwt.verify(refresh_token, process.env.REFRESH_TOKEN_SECRET);
+            await redis.del(`${decoded.userId}`)
+        }
+
+        res.clearCookie("accessToken");
+        res.clearCookie("refreshToken")
+        res.status(200).json({message: "User signed out"})
+    } catch (e) {
+        res.status(500).json({message: e.message})
+    }
 }
 
