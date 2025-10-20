@@ -121,3 +121,6 @@ export const signout = async (req, res) => {
     }
 }
 
+export const getUserProfile = () => {
+    
+}
