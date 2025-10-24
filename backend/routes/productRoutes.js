@@ -8,5 +8,6 @@ router.get("/featured", getFeaturedProducts);
 router.post("/", protectRoute, adminRoute, createProduct);
 router.delete("/:id", protectRoute, adminRoute, deleteProduct);
 router.get("/recommended", protectRoute, getRecommendedProducts);
-router.get("/category/:category", protectRoute, getProductsCategory)
+router.get("/category/:category", protectRoute, getProductsCategory);
+router.put("/:id", protectRoute, adminRoute, featuredToggle);
 export default router;

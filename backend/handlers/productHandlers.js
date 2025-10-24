@@ -96,3 +96,31 @@ export const getProductsCategory = async (req, res) => {
 		res.status(500).json({ message: error.message });
 	}
 };
+
+export const featuredToggle = async (req, res) => {
+    try{
+        const product = await Product.findById(req.params.id);
+        if (product){
+            product.isFeatured = !product.isFeatured;
+            await product.save()
+            await updateCache();
+
+            res.status(200).JSON(product);
+        }
+        else {
+            res.status(400)
+        }
+
+    } catch (e){
+
+    }
+}
+
+export const updateCache = async () => {
+	try {
+		const featuredProducts = await Product.find({ isFeatured: true }).lean();
+		await redis.set("featured_products", JSON.stringify(featuredProducts));
+	} catch (e) {
+        res.status(500).json({message: e.message})
+    }
+}
