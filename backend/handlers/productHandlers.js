@@ -30,7 +30,7 @@ export const getFeaturedProducts = async (req, res) => {
     }
 }
 
-export const createProducts = async (req, res) => {
+export const createProduct = async (req, res) => {
     try{
         const {name, description, price, image, category} = req.body;
 
@@ -47,5 +47,19 @@ export const createProducts = async (req, res) => {
         res.status(200).json(product);
     } catch (e) {
         res.status(500).json({message: e.message})
+    }
+}
+
+export const deleteProduct = async (req, res) => {
+    try {
+    const product = await Product.findById(req.params.id);
+    if (product.image){
+        const imgId = product.image.split("/").pop().split(".")[0];
+        await cloudinary.uploader.destroy(`products/${imgId}`)
+    }
+    await Product.findByIdAndDelete(req.params.id);
+    res.status(200)
+    } catch (e){
+        res.status(500).JSON({message: e.message})
     }
 }
