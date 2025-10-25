@@ -122,5 +122,10 @@ export const signout = async (req, res) => {
 }
 
 export const getUserProfile = () => {
-    
+    try{
+        res.status(200).json(req.user)
+    } catch (e){
+        res.status(500).json({message: e.message})
+
+    }
 }
